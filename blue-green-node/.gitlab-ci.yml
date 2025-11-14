@@ -1,0 +1,57 @@
+stages:
+  - build
+  - test
+  - deploy-green
+  - switch-green
+  - deploy-blue
+  - switch-blue
+
+variables:
+  NODE_ENV: production
+
+before_script:
+  - chmod +x scripts/*.sh
+  - yum install -y awscli
+
+build:
+  stage: build
+  script:
+    - echo "Building Node.js app..."
+    - cp -r app build/
+
+test:
+  stage: test
+  script:
+    - node -v
+    - test -f build/server.js
+
+deploy_green:
+  stage: deploy-green
+  script:
+    - ./scripts/deploy_green.sh
+  only:
+    - main
+
+switch_green:
+  stage: switch-green
+  script:
+    - ./scripts/switch_to_green.sh
+  when: manual
+  only:
+    - main
+
+deploy_blue:
+  stage: deploy-blue
+  script:
+    - ./scripts/deploy_blue.sh
+  only:
+    - rollback
+
+switch_blue:
+  stage: switch-blue
+  script:
+    - ./scripts/switch_to_blue.sh
+  when: manual
+  only:
+    - rollback
+
